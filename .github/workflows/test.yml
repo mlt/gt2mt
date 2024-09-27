@@ -1,0 +1,55 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  msmtp:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: >-
+          mingw-w64-ucrt-x86_64-gcc
+          pkgconf
+          automake
+          autoconf
+          make
+          texinfo
+    - name: Patch
+      run: |
+        curl -sLO https://github.com/mlt/msmtp/archive/refs/heads/native.zip
+        /c/Program\ Files/7-Zip/7z x native.zip
+        cd msmtp-native
+        cp -a src src.orig
+        perl ../gt2mt.pl
+        cd src
+        windmc --codepage_in=utf-8 -U --codepage_out=utf-8 messages.mc
+        perl -pi -e 's/code_page\(1\)/code_page(57004)/' messages.rc
+        cp -a ../../get_message.c ./
+        cat <<'EOT' >> Makefile.am
+        msmtp_SOURCES += get_message.c
+        msmtp_LDADD += messages.o
+        messages.o: messages.rc
+        	windres -o $@ $<
+        EOT
+    - name: Configure
+      run: |
+        cd msmtp-native
+        autoreconf -i
+        ./configure --with-tls=sspi --with-vault=credman --disable-nls LDFLAGS=-Wl,-Bstatic,-lwinpthread
+    - name: Build
+      run: |
+        cd msmtp-native
+        make
+        strip --strip-all src/msmtp.exe
+    - name: List SO imports
+      run: |
+        ldd msmtp-native/src/msmtp
+        msmtp-native/src/msmtp --version
