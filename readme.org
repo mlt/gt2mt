@@ -2,6 +2,7 @@
 #+OPTIONS: ^:{}
 
 [[https://github.com/mlt/gt2mt/actions/workflows/test.yml][https://github.com/mlt/gt2mt/actions/workflows/test.yml/badge.svg]]
+[[https://codecov.io/github/mlt/gt2mt][https://codecov.io/github/mlt/gt2mt/graph/badge.svg?token=7B0GW3JK6G]]
 
 * About
 This tool minimizes external dependencies when builing software that
