@@ -12,7 +12,7 @@ API. This is accomplished by
 - collecting all translations from PO files
 - producing a message catalog file to be used by [[https://learn.microsoft.com/en-us/windows/win32/wes/message-compiler--mc-exe-][Message Compiler]]
 - replacing `_()` with `FuncName(MSG_ID)` within the source code
-- linking in generated binary message table resources as well as an
+- linking in generated binary [[https://learn.microsoft.com/en-us/windows/win32/menurc/messagetable-resource][message table resources]] as well as an
   [[https://github.com/mlt/gt2mt/blob/master/get_message.c][extra source file]] containing `FuncName` definition that uses
   [[https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew][FormatMessage]].
 
