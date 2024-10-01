@@ -3,6 +3,7 @@
 
 use warnings;
 use strict;
+use Encode qw/encode/;
 
 =head1 GNU gettext to message table converter
 
@@ -254,6 +255,10 @@ sub make_id($) {
     return $id;
 };
 
+
+my $max_bytes = 0;
+my $max_length = 0;
+
 =item sanitize()
 
 Replace newlines with %n, etc. Also append %0 at the end.  See Remarks
@@ -268,6 +273,11 @@ sanitized version for English fallback.
 
 sub sanitize ($) {
     my $msg = shift;
+
+    my $length = length $msg;
+    $max_length = $length if $length > $max_length;
+    my $bytes = length(encode('UTF-8', $msg));
+    $max_bytes = $bytes if $bytes > $max_bytes;
 
     return $msg =~ s/\\n/%n/rg . '%0';
 };
@@ -754,3 +764,5 @@ open(MISSING, ">$missing") or die $!;
 print MISSING "file,lineno,pos,msgid\n";
 close(MISSING);
 process_dir('.');
+
+print "Maximum message length: $max_length letters ($max_bytes bytes)\n";

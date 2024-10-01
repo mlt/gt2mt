@@ -3,15 +3,20 @@
 #include <stdlib.h>
 #include <locale.h>
 
-#define BUFFER_SIZE 2048
+/* Size in letters to fit the longest message (in UTF-16) */
+#define BUFFER_SIZE 4096
+#define MULTIPLIER 2
 
 char* GetString(DWORD msgid) {
 	static wchar_t buffer_wide[BUFFER_SIZE];
-	static char buffer[BUFFER_SIZE];
+	static char buffer[BUFFER_SIZE * MULTIPLIER];
 	static int locale_set = 0;
 	static LANGID lang;
 	static char locale_name[LOCALE_NAME_MAX_LENGTH * sizeof(WCHAR)];
 	static _locale_t locale;
+	static char* buffer_ptr = buffer;
+
+	char* result = buffer_ptr;
 
 	if (!locale_set) {
 		locale_set = 1;
@@ -30,7 +35,12 @@ char* GetString(DWORD msgid) {
 
 	//setlocale(LC_ALL, locale_name); /* This does not cut it :( */
 	size_t conv;
-	errno_t err = _wcstombs_s_l(&conv, buffer, BUFFER_SIZE, buffer_wide, BUFFER_SIZE, locale);
+	errno_t err = _wcstombs_s_l(&conv, result, BUFFER_SIZE, buffer_wide, BUFFER_SIZE, locale);
+	/* allow for multiple calls within a single callee function */
+	buffer_ptr += conv;
+	if (buffer_ptr - buffer > BUFFER_SIZE)
+		buffer_ptr = buffer;
+
 	//_free_locale(locale);
 
 	//wcstombs_s(&conv, buffer, BUFFER_SIZE, buffer_wide, BUFFER_SIZE);
@@ -39,5 +49,5 @@ char* GetString(DWORD msgid) {
 	/* if (len > 2) /\* remove trailing \r\n inserted by FormatMessage *\/ */
 	/* 	buffer[len - 2] = 0; */
 
-	return buffer;
+	return result;
 };
