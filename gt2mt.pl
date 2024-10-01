@@ -294,7 +294,7 @@ foreach my $file (@files) {
     my $fsize = -s "$podir/$file";
     print "Processing $file";
     print ": 000%" if -t STDOUT;
-    open(PO, "<:encoding(utf-8)", "$podir/$file") or die $!;
+    open(PO, "<", "$podir/$file") or die $!;
     %ids = ();
     my $lineno = 1;
     my $pos = 1;
@@ -465,6 +465,11 @@ foreach my $file (@files) {
                     }
                     $source = join(',', @sources);
                     @sources = ();
+
+                    if ($msgid eq '' and $msgstr =~ /charset=([^\\n]+)\\n/) {
+                        # print "  Changing encoding to: $1\n";
+                        binmode PO, ":encoding($1)";
+                    }
                     # Messages can be out of order in po files some
                     # may be missing generate SymbolicName & MessageId
                     # at the very end
