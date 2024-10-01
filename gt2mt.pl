@@ -645,9 +645,13 @@ END
         } elsif ($state == STATE_STRING) {
             if ($c eq '"' and $escape != 1) {
                 $state = pop(@states);
-            } elsif (@states) {
+            } elsif ($c eq '\\') {
+            } elsif (@states and not ($c eq "\n" and $escape)) {
                 my $old = $states[-1];
                 if ($old == STATE_GETTEXT) {
+                    if ($escape) {
+                        $msgid .= '\\';
+                    }
                     $msgid .= $c;
                 } else {
                     die "boo";
