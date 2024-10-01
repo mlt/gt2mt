@@ -36,6 +36,11 @@ char* GetString(DWORD msgid) {
 	//setlocale(LC_ALL, locale_name); /* This does not cut it :( */
 	size_t conv;
 	errno_t err = _wcstombs_s_l(&conv, result, BUFFER_SIZE, buffer_wide, BUFFER_SIZE, locale);
+	/* strip carriage returns */
+	for (int i = 0, j = 0; i < conv; ++i)
+		if (result[i] != '\r')
+			result[j++] = result[i];
+
 	/* allow for multiple calls within a single callee function */
 	buffer_ptr += conv;
 	if (buffer_ptr - buffer > BUFFER_SIZE)
