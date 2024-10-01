@@ -48,7 +48,7 @@ jobs:
         perl -MDevel::Cover ../gt2mt.pl
         ~/perl5/bin/cover -report html -report codecov
         cd src
-        windmc --codepage_in=utf-8 -U --codepage_out=utf-8 messages.mc
+        windmc -u messages.mc
         perl -pi -e 's/code_page\(1\)/code_page(57004)/' messages.rc
         cp -a ../../get_message.c ./
         cat <<'EOT' >> Makefile.am

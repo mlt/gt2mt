@@ -294,7 +294,7 @@ foreach my $file (@files) {
     my $fsize = -s "$podir/$file";
     print "Processing $file";
     print ": 000%" if -t STDOUT;
-    open(PO, "<$podir/$file") or die $!;
+    open(PO, "<:encoding(utf-8)", "$podir/$file") or die $!;
     %ids = ();
     my $lineno = 1;
     my $pos = 1;
@@ -307,7 +307,7 @@ foreach my $file (@files) {
     my @sources;
     my $source = "";
     my $bytes = 0;
-    while (sysread PO, my $c, 1) {
+    while (read PO, my $c, 1) {
         # my $c = getc PO;
         # if (!defined($c)) {
         #     last;
@@ -707,7 +707,7 @@ mkdir($destdir, 0700);
 
 # Produce message file and set up symbol
 
-open(MSG, ">$destdir/$msgfile") or die $!;
+open(MSG, ">:encoding(utf-16le)", "$destdir/$msgfile") or die $!;
 print MSG <<END;
 ;#ifndef __MESSAGES_H__
 ;#define __MESSAGES_H__
