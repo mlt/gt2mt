@@ -73,6 +73,45 @@ jobs:
       run: |
         ldd msmtp-native/src/msmtp
         msmtp-native/src/msmtp --version
+# It looks like UTF-8 is not enabled system-wide on GitHub Actions
+# runner and we are using non-UNICODE enabled code. Therefore we use
+# iconv to convert to utf-8 here. The binary should work on your
+# system properly either way.
+    - name: Set French locale
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale fr-FR
+    - name: Set French locale again I don't know why
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale fr-FR
+    - name: Test with French locale
+      run: msmtp-native/src/msmtp --version | iconv -f ISO-8859-1 -t utf-8
+
+    - name: Set German locale
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale de-DE
+    - name: Test with German locale
+      run: msmtp-native/src/msmtp --version | iconv -f ISO-8859-15 -t utf-8
+
+    - name: Set Russian locale
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale ru-RU
+    - name: Set Russian locale again
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale ru-RU
+    - name: Test with Russian locale
+      run: msmtp-native/src/msmtp --version | iconv -f cp1251 -t utf-8
+
+    - name: Set Brazilian locale
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale pt-BR
+    - name: Test with Portuguese
+      run: msmtp-native/src/msmtp --version | iconv -f ISO-8859-1 -t utf-8
+    - name: Set Brazilian locale again
+      shell: pwsh
+      run: Set-WinSystemLocale -SystemLocale pt-BR
+    - name: Test with Portuguese
+      run: msmtp-native/src/msmtp --version | iconv -f ISO-8859-1 -t utf-8
+
     - name: Artifacts
       uses: actions/upload-artifact@v4
       with:
