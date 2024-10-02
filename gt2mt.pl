@@ -551,7 +551,8 @@ foreach my $file (@files) {
         printf "\b\b\b\b%03d%%", int(100*$bytes/$fsize) if -t STDOUT; # and not $bytes % 10;
     }
     close(PO);
-    print "\n";
+    printf "\b\b\b\b\b" if -t STDOUT;
+    print " Done\n";
 }
 
 =item process_file()
@@ -670,7 +671,8 @@ END
     close(FILE);
     close(MISSING);
     close(OUT);
-    print "\n";
+    printf "\b\b\b\b\b" if -t STDOUT;
+    print " Done\n";
 #    die "done\n";
 };
 
