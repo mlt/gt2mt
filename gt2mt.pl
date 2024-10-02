@@ -634,14 +634,15 @@ END
         } elsif ($state == STATE_STRING) {
             if ($c eq '"' and $escape != 1) {
                 $state = pop(@states);
-            } elsif ($c eq '\\') {
             } elsif (@states and not ($c eq "\n" and $escape)) {
                 my $old = $states[-1];
                 if ($old == STATE_GETTEXT) {
+                    # TODO: accumulate and expand octal escapes
+                    # such as L\303\241szl\303\263
                     if ($escape) {
                         $msgid .= '\\';
                     }
-                    $msgid .= $c;
+                    $msgid .= $c if $c ne '\\' or $escape;
                 } else {
                     die "boo";
                 }
