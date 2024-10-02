@@ -16,6 +16,24 @@ API. This is accomplished by
   [[https://github.com/mlt/gt2mt/blob/master/get_message.c][extra source file]] containing `FuncName` definition that uses
   [[https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew][FormatMessage]].
 
+** But why?
+- Just for Fun
+  - to see if it can be done as it is not the first time I have this
+    idea
+- It allows for a very portable executables without extra dependencies
+  - sometimes translations are the only extras to carry around
+- gettext-enabled applications sometimes expect Machine Object (MO) files
+  with translations to be in a hardcoded location (LOCALEDIR)
+  - that is not quite portable to move around without proper
+    "installation"
+- You don't feel particularly inclined to include a notice that your
+  binary uses gettext runtime under LGPL terms
+  - you can use gettext ecosystem for in-house development only but
+    ship it without a trace
+
+Don't get me wrong GNU gettext is great! This is just a potentially
+alternative way to pack things.
+
 ** What this tools is _not_
 This tool does _not_ help with the process of development,
 internationalization, or localization. You do want to keep using GNU
@@ -103,3 +121,7 @@ This is a proof of concept. Certain things are still broken.
 - Resource compiler from Visual Studio does not like certain languages
   (e.g. Tamil) when building non-UNICODE (-U) but ANSI (-A althoug
   MBCS) applications.
+- It won't work if [[https://git.savannah.gnu.org/cgit/diffutils.git/tree/src/cmp.c#n166][messages to be translated are stored in array]] with
+  N_ as those can't be initialized with a function call.
+- It won't work if there is some string concatenation going on using a
+  macro, e.g. [[https://git.savannah.gnu.org/cgit/diffutils.git/tree/src/cmp.c#n551][N_("%s %s differ: byte %"PRIdMAX", line %"PRIdMAX"\n")]]
