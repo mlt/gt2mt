@@ -165,12 +165,18 @@ use constant {
     STATE_SOURCE => 12,         # we saw "^#:"
     STATE_OBSOLETE => 13,       # we saw "^#~"
 
-    STATE_UNDERSCORE => 101,    # we saw "_"
-    STATE_GETTEXT => 102,       # we saw "_("
+    STATE_GETTEXT => 102,       # we saw "<identifier>("
+    STATE_IDENTIFIER => 104,    # saw [a-zA-Z_][a-zA-Z0-9_]*
 
     STATE_OTHER => 999,
 };
 
+my %gettext = (
+    _ => STATE_GETTEXT,
+    gettext => STATE_GETTEXT,
+    N_ => STATE_GETTEXT, # comment me out if I'm in array initializer :(
+    # ngettext
+   );
 
 =item %messages
 
@@ -588,27 +594,40 @@ END
     my $state = STATE_LINESTART_FRESH;
     my @states;
     my $escape = 0;
-    my $oldstate;
     my $msgid = "";
-    my $msgstr = "";
     my @sources;
     my $source = "";
     my $bytes = 0;
+    my $identifier = '';
     while (sysread FILE, my $c, 1) {
         $bytes++;
         next if $c eq "\r";
 
+        # print "$lineno:$pos state:$state\n";
         if ($state == STATE_LINESTART_FRESH) {
-            if ($c eq '_') {
-                $state = STATE_UNDERSCORE;
+            if ($c =~ /[a-zA-Z_]/) {
+                $state = STATE_IDENTIFIER;
+                $identifier = $c;
+            } else {
+                print OUT $c;
             }
-        } elsif ($state == STATE_UNDERSCORE) {
-            if ($c eq '(') {
-                $state = STATE_GETTEXT;
-            } elsif ($c ne ' ' or $c ne "\n") {
+        } elsif ($state == STATE_IDENTIFIER) {
+            if ($c =~ /[a-zA-Z0-9_]/) {
+                $identifier .= $c;
+            } elsif (exists $gettext{$identifier}) {
+                if ($c eq '(') {
+                    push(@states, $gettext{$identifier});
+                    $state = STATE_GETTEXT;
+                } elsif ($c eq ' ') { # or $c eq "\n") {
+                    # we disallow \n for #undef gettext to work
+                    # TODO: if we have legit _<nl>(
+                } else {
+                    $state = STATE_LINESTART_FRESH;
+                    print OUT "$identifier$c";
+                }
+            } else {
+                print OUT "$identifier$c";
                 $state = STATE_LINESTART_FRESH;
-                # I think we can get by without another stack
-                print OUT '_';
             }
         } elsif ($state == STATE_GETTEXT) {
             if ($c eq '"') {
@@ -619,18 +638,33 @@ END
                 $msgid =~ s/\t/\\t/g;
                 if (exists $messages{$msgid}) {
                     my $symbol = $messages{$msgid}{'symbol'};
-                    print OUT "$func_name($symbol";
+                    print OUT "$func_name($symbol)";
                     # print "$lineno $msgid => $symbol\n";
                 } else {
-                    print MISSING "$file,$lineno,$pos,$msgid\n";
-                    print OUT qq{_("$msgid"}; # yes, we have unbalanced parenthesis
+                    print MISSING "$file,$lineno,$pos,$identifier,$msgid\n";
+                    print OUT qq{$identifier("$msgid")};
                 }
                 $msgid = '';
                 $state = STATE_LINESTART_FRESH;
                 @states = ();
+            } elsif ($c eq ',') {
+                if (exists $messages{$msgid}) {
+                    my $symbol = $messages{$msgid}{'symbol'};
+                    print OUT "${func_name}2($symbol,";
+                } else {
+                    print MISSING "$file,$lineno,$pos,$identifier,$msgid\n";
+                    print OUT qq{$identifier("$msgid"}; # yes, we have unbalanced parenthesis
+                }
             } elsif ($c ne ' ' and $c ne "\n") { # #define _(string) gettext(string)
-                print OUT '_(';
+                # die "boo @{[__FILE__]}:@{[__LINE__]} $lineno:$pos msgid:$msgid c:$c states:@{[join(',', @states)]}\n" if $c ne '*';
+                print OUT "$identifier(";
+                if ($msgid ne '') {
+                    print OUT qq{"$msgid"};
+                    $msgid = '';
+                }
+                print OUT $c;
                 $state = STATE_LINESTART_FRESH;
+                @states = ();
             }
         } elsif ($state == STATE_STRING) {
             if ($c eq '"' and $escape != 1) {
@@ -660,10 +694,6 @@ END
             $pos = 1;
         } else {
             $pos++;
-        }
-
-        if ($state != STATE_UNDERSCORE and $state != STATE_GETTEXT and $state != STATE_STRING) {
-            print OUT $c;
         }
 
         printf "\b\b\b\b%03d%%", int(100*$bytes/$fsize) if -t STDOUT; # and not $bytes % 10;
@@ -762,7 +792,7 @@ close(MSG);
 
 
 open(MISSING, ">$missing") or die $!;
-print MISSING "file,lineno,pos,msgid\n";
+print MISSING "file,lineno,pos,func,msgid\n";
 close(MISSING);
 process_dir('.');
 
