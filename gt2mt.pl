@@ -279,7 +279,7 @@ sub sanitize ($) {
     my $bytes = length(encode('UTF-8', $msg));
     $max_bytes = $bytes if $bytes > $max_bytes;
 
-    return $msg =~ s/\\n/%n/rg . '%0';
+    return $msg =~ s/\\(n|t)/%$1/rg . '%0';
 };
 
 opendir(DIR, $podir) or die "Can't open $podir: $!";
@@ -627,6 +627,8 @@ END
                 push(@states, $state);
                 $state = STATE_STRING;
             } elsif ($c eq ')') {
+                # fold real tabs into \t
+                $msgid =~ s/\t/\\t/g;
                 if (exists $messages{$msgid}) {
                     my $symbol = $messages{$msgid}{'symbol'};
                     print OUT "$func_name($symbol";
