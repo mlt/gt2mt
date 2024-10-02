@@ -307,11 +307,9 @@ foreach my $file (@files) {
     my @sources;
     my $source = "";
     my $bytes = 0;
-    while (read PO, my $c, 1) {
-        # my $c = getc PO;
-        # if (!defined($c)) {
-        #     last;
-        # }
+    my $c = 'empty';
+    while ($c ne '') {
+        read PO, $c, 1;
         $bytes++;
         next if $c eq "\r";
         # if ($state != STATE_STRING) {
@@ -447,7 +445,7 @@ foreach my $file (@files) {
                 $escape = 0;
             }
         } elsif ($state == STATE_LINESTART) {
-            if ($c eq "\n") { # TODO: or undef from getc
+            if ($c eq "\n" or $c eq '') {
                 if (@states) {
                     my $old = pop @states;
                     if ($old != STATE_MSGSTR_3) {
@@ -553,17 +551,6 @@ foreach my $file (@files) {
         printf "\b\b\b\b%03d%%", int(100*$bytes/$fsize) if -t STDOUT; # and not $bytes % 10;
     }
     close(PO);
-    if ($msgid ne '') {
-        # TODO: mark obsoletes if it is or just merge using getc
-        if (not exists $messages{$msgid}) {
-            $messages{$msgid} = {
-                languages => {
-                    en => sanitize($msgid)
-                }
-            };
-        }
-        $messages{$msgid}{'languages'}{$lang} = sanitize($msgstr);
-    }
     print "\n";
 }
 
