@@ -698,7 +698,7 @@ sub process_dir {
         if (-d "$srcdir/$full") {
             mkdir("$destdir/$full", 0700);
             process_dir($full);
-        } elsif ($file =~ /\.c(pp)?$/) {
+        } elsif ($file =~ /\.c(pp|xx)?$/) {
             process_file($full);
         }
     }
