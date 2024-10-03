@@ -178,6 +178,10 @@ my %gettext = (
     # ngettext
    );
 
+my %cheats = (
+    PRIdMAX => 's',
+   );
+
 =item %messages
 
 A hash of hashes storing content of PO files.
@@ -641,7 +645,7 @@ END
                     print OUT "$func_name($symbol)";
                     # print "$lineno $msgid => $symbol\n";
                 } else {
-                    print MISSING "$file,$lineno,$pos,$identifier,$msgid\n";
+                    print MISSING qq{$file,$lineno,$pos,$identifier,v,"$msgid"\n};
                     print OUT qq{$identifier("$msgid")};
                 }
                 $msgid = '';
@@ -652,13 +656,15 @@ END
                     my $symbol = $messages{$msgid}{'symbol'};
                     print OUT "${func_name}2($symbol,";
                 } else {
-                    print MISSING "$file,$lineno,$pos,$identifier,$msgid\n";
+                    print MISSING qq{$file,$lineno,$pos,$identifier,v,"$msgid"\n};
                     print OUT qq{$identifier("$msgid"}; # yes, we have unbalanced parenthesis
                 }
             } elsif ($c ne ' ' and $c ne "\n") { # #define _(string) gettext(string)
                 # die "boo @{[__FILE__]}:@{[__LINE__]} $lineno:$pos msgid:$msgid c:$c states:@{[join(',', @states)]}\n" if $c ne '*';
+                # TODO: accumulate token to check against %cheats
                 print OUT "$identifier(";
                 if ($msgid ne '') {
+                    print MISSING qq{$file,$lineno,$pos,$identifier,-,"""$msgid""$c..."\n};
                     print OUT qq{"$msgid"};
                     $msgid = '';
                 }
@@ -792,7 +798,7 @@ close(MSG);
 
 
 open(MISSING, ">$missing") or die $!;
-print MISSING "file,lineno,pos,func,msgid\n";
+print MISSING "file,lineno,pos,func,not_us,msgid\n";
 close(MISSING);
 process_dir('.');
 
