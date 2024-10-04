@@ -115,6 +115,12 @@ Take a look at [[https://github.com/mlt/gt2mt/blob/master/.github/workflows/test
 * Status
 This is a proof of concept. Certain things are still broken.
 
+* License
+The main (Perl) part of this project is licensed under the
+[[https://www.gnu.org/licenses/gpl-3.0.html][GPLv3]]. However, the reference C code that uses =FormatMessage()= is
+licensed under the [[https://www.boost.org/LICENSE_1_0.txt][BSL-1.0]]. You may compile and link against that C
+code without any attribution.
+
 * Limitations
 - windmc generates `#pragma code_page(1)` for some languages that
   windres does not like
