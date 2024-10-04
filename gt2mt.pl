@@ -97,7 +97,7 @@ my $func_name = $conf{'func_name'};
 my %languages = (
     en => {
         lang => 'English',
-        id => '409'
+        id => '0409'
     },
     # en => {
     #     lang => 'Neutral',
@@ -196,9 +196,6 @@ A hash of hashes storing content of PO files.
     }
 }
 
-B<TODO:> mark msgid as I<seen> if used in any c source file. Do not
-dump non-seen messages (including obsolete translations) into mc file.
-
 =cut
 
 my %messages;                   # content of parsed po files
@@ -292,6 +289,8 @@ sub sanitize ($) {
     return $msg =~ s/\\(n|t)/%$1/rg . '%0';
 };
 
+my %language_seen = ();
+
 opendir(DIR, $podir) or die "Can't open $podir: $!";
 my @files = readdir(DIR);
 closedir(DIR);
@@ -299,7 +298,12 @@ foreach my $file (@files) {
     next if $file !~ m/(.*)\.po$/;
 
     my $lang = $1;
-#    die $languages{$lang};
+    if (not exists $languages{$lang}) {
+        print "Skipping $file. Edit %languages to enable.\n";
+        next;
+    }
+
+    $language_seen{$lang} = undef;
 
     my $fsize = -s "$podir/$file";
     print "Processing $file";
@@ -642,6 +646,7 @@ END
                 $msgid =~ s/\t/\\t/g;
                 if (exists $messages{$msgid}) {
                     my $symbol = $messages{$msgid}{'symbol'};
+                    $messages{$msgid}{'seen'} = undef;
                     print OUT "$func_name($symbol)";
                     # print "$lineno $msgid => $symbol\n";
                 } else {
@@ -742,7 +747,16 @@ sub process_dir {
 
 mkdir($destdir, 0700);
 
-# Produce message file and set up symbol
+foreach my $msgid (keys %messages) {
+    $messages{$msgid}{'symbol'} = make_id($msgid);
+}
+
+open(MISSING, ">$missing") or die $!;
+print MISSING "file,lineno,pos,func,not_us,msgid\n";
+close(MISSING);
+process_dir('.');
+
+print "Maximum message length: $max_length letters ($max_bytes bytes)\n";
 
 open(MSG, ">:encoding(utf-16le)", "$destdir/$msgfile") or die $!;
 print MSG <<END;
@@ -756,17 +770,17 @@ MessageIdTypedef=DWORD
 
 LanguageNames=(
 END
-while (my ($lang, $v) = each %languages) {
-    my %h = %$v;
+foreach my $lang (keys %language_seen) {
+    my %h = %{ $languages{$lang} };
     print MSG "    $h{'lang'}=0x$h{'id'}:MSG0$h{'id'}\n"
 }
 print MSG ")\n\n";
 
 my $id = 1;
 foreach my $msgid (keys %messages) {
-    my $symbol = make_id($msgid);
-    $messages{$msgid}{'symbol'} = $symbol;
-    # my $symbol = $h{'symbol'};
+    next unless exists $messages{$msgid}{'seen'};
+
+    my $symbol = $messages{$msgid}{'symbol'};
     print MSG <<END;
 MessageId=$id
 SymbolicName=$symbol
@@ -776,7 +790,7 @@ END
     my %m = %$h;
     while (my ($lang, $msgstr) = each %m) {
         if (not exists $languages{$lang}) {
-            next;
+            next; # should not happen as we filter out languages earlier on
         }
         my $l = $languages{$lang}{'lang'};
         print MSG <<END;
@@ -795,11 +809,3 @@ print MSG <<END;
 ;
 END
 close(MSG);
-
-
-open(MISSING, ">$missing") or die $!;
-print MISSING "file,lineno,pos,func,not_us,msgid\n";
-close(MISSING);
-process_dir('.');
-
-print "Maximum message length: $max_length letters ($max_bytes bytes)\n";
