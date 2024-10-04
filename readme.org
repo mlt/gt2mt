@@ -115,6 +115,9 @@ Take a look at [[https://github.com/mlt/gt2mt/blob/master/.github/workflows/test
 * Status
 This is a proof of concept. Certain things are still broken.
 
+It is [[https://github.com/mlt/gt2mt/actions][tested]] on ([[https://github.com/mlt/msmtp/tree/native][modified]]) [[https://github.com/marlam/msmtp][msmtp]] and [[https://github.com/hunspell/hunspell][hunspell]]. You can see what went
+wrong in [[https://gist.github.com/mlt/89edf18c2870ec5471dfe38fe865051d][this gist]].
+
 * License
 The main (Perl) part of this project is licensed under the
 [[https://www.gnu.org/licenses/gpl-3.0.html][GPLv3]]. However, the reference C code that uses =FormatMessage()= is
